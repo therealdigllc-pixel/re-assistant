@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RE Assistant">
+<title>🏠 RE Investor Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0f1e36;
+  --navy2: #1a2f4e;
+  --blue: #2563eb;
+  --blue-light: #3b82f6;
+  --gold: #d4a853;
+  --gold-light: #f0c96e;
+  --cream: #faf7f2;
+  --text: #1a1a2e;
+  --text-muted: #6b7280;
+  --border: rgba(255,255,255,0.1);
+  --card: rgba(255,255,255,0.06);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--navy);
+  color: white;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SPLASH / SETUP ── */
+#splash {
+  position: fixed; inset: 0; z-index: 100;
+  background: linear-gradient(160deg, #0f1e36 0%, #1a3a6e 50%, #0f1e36 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 32px;
+  padding-top: calc(40px + var(--safe-top));
+}
+.splash-icon { font-size: 64px; margin-bottom: 24px; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.splash-title { font-family: 'DM Serif Display', serif; font-size: 32px; text-align: center; margin-bottom: 8px; line-height: 1.2; }
+.splash-sub { color: var(--gold); font-size: 14px; text-align: center; margin-bottom: 40px; font-weight: 300; letter-spacing: 1px; }
+.setup-card {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px; padding: 28px; width: 100%; max-width: 400px;
+  backdrop-filter: blur(20px);
+}
+.setup-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--gold); margin-bottom: 8px; text-transform: uppercase; }
+.setup-input {
+  width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px; padding: 14px 16px; color: white; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; margin-bottom: 16px; outline: none;
+  transition: border-color 0.2s;
+}
+.setup-input:focus { border-color: var(--gold); }
+.setup-input::placeholder { color: rgba(255,255,255,0.3); }
+.setup-hint { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 20px; line-height: 1.5; }
+.setup-hint a { color: var(--gold-light); text-decoration: none; }
+.btn-primary {
+  width: 100%; background: linear-gradient(135deg, var(--gold), #c4962a);
+  color: var(--navy); font-family: 'DM Sans', sans-serif; font-weight: 700;
+  font-size: 15px; padding: 16px; border: none; border-radius: 14px;
+  cursor: pointer; letter-spacing: 0.5px;
+  transition: transform 0.1s, opacity 0.2s;
+}
+.btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+
+/* ── MAIN APP ── */
+#app { display: none; flex-direction: column; height: 100vh; height: 100dvh; }
+
+/* Header */
+.app-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+  padding: 16px 20px 12px;
+  padding-top: calc(16px + var(--safe-top));
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.header-title { font-family: 'DM Serif Display', serif; font-size: 20px; }
+.header-title span { color: var(--gold); }
+.header-badge { background: rgba(212,168,83,0.15); border: 1px solid var(--gold); color: var(--gold); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; }
+
+/* Nav tabs */
+.nav-tabs { display: flex; gap: 6px; }
+.nav-tab {
+  flex: 1; padding: 8px 4px; background: transparent; border: 1px solid transparent;
+  border-radius: 10px; color: rgba(255,255,255,0.45); font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 500; cursor: pointer; text-align: center;
+  transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.nav-tab .tab-icon { font-size: 18px; }
+.nav-tab.active {
+  background: rgba(212,168,83,0.12); border-color: rgba(212,168,83,0.3);
+  color: var(--gold-light);
+}
+
+/* Content */
+.app-content { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+.tab-panel { display: none; padding: 16px; padding-bottom: calc(16px + var(--safe-bottom)); }
+.tab-panel.active { display: block; }
+
+/* ── CHAT TAB ── */
+#chat-panel { display: none; flex-direction: column; height: calc(100dvh - 120px - var(--safe-top)); padding: 0; }
+#chat-panel.active { display: flex; }
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 16px;
+  -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.55; word-wrap: break-word; }
+.msg-bubble.user { background: linear-gradient(135deg, var(--blue), #1d4ed8); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.msg-bubble.assistant { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; align-self: flex-start; border-bottom-left-radius: 4px; }
+.msg-bubble.system { background: rgba(212,168,83,0.1); border: 1px solid rgba(212,168,83,0.2); color: var(--gold-light); align-self: center; font-size: 12px; text-align: center; border-radius: 12px; max-width: 90%; }
+.typing-indicator { align-self: flex-start; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; border-bottom-left-radius: 4px; padding: 14px 18px; display: flex; gap: 5px; align-items: center; }
+.typing-dot { width: 7px; height: 7px; background: rgba(255,255,255,0.4); border-radius: 50%; animation: typingDot 1.2s infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingDot { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-6px);opacity:1} }
+
+/* Quick chips */
+.chips-row { padding: 8px 16px; display: flex; gap: 8px; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.chips-row::-webkit-scrollbar { display: none; }
+.chip { flex-shrink: 0; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 7px 14px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.chip:active { background: rgba(212,168,83,0.15); border-color: var(--gold); color: var(--gold); }
+
+/* Chat input */
+.chat-input-area {
+  padding: 10px 16px;
+  padding-bottom: calc(10px + var(--safe-bottom));
+  background: var(--navy); border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
+.chat-textarea {
+  flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 22px; padding: 11px 18px; color: white; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; resize: none; outline: none; max-height: 100px;
+  transition: border-color 0.2s; line-height: 1.4;
+}
+.chat-textarea:focus { border-color: rgba(212,168,83,0.5); }
+.chat-textarea::placeholder { color: rgba(255,255,255,0.3); }
+.send-btn {
+  width: 44px; height: 44px; background: linear-gradient(135deg, var(--gold), #c4962a);
+  border: none; border-radius: 50%; cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: transform 0.1s, opacity 0.2s;
+}
+.send-btn:active { transform: scale(0.92); }
+.send-btn:disabled { opacity: 0.4; }
+
+/* ── DASHBOARD TAB ── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.stat-card {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px; padding: 16px; position: relative; overflow: hidden;
+}
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold), transparent); }
+.stat-num { font-family: 'DM Serif Display', serif; font-size: 36px; line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-icon { position: absolute; top: 14px; right: 14px; font-size: 22px; opacity: 0.25; }
+
+.section-title { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; margin-top: 4px; }
+
+/* Quick action buttons */
+.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.action-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 14px; cursor: pointer; text-align: left;
+  transition: all 0.15s; display: flex; flex-direction: column; gap: 6px;
+}
+.action-btn:active { background: rgba(212,168,83,0.1); border-color: var(--gold); transform: scale(0.97); }
+.action-btn .action-icon { font-size: 22px; }
+.action-btn .action-label { font-size: 12px; font-weight: 600; color: white; }
+.action-btn .action-desc { font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1.3; }
+
+/* ── LEADS / CONTACTS / DEALS LISTS ── */
+.list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.add-btn {
+  background: linear-gradient(135deg, var(--gold), #c4962a); color: var(--navy);
+  border: none; border-radius: 10px; padding: 8px 14px; font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: transform 0.1s;
+}
+.add-btn:active { transform: scale(0.96); }
+
+.item-card {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  transition: all 0.15s; cursor: pointer;
+}
+.item-card:active { background: rgba(255,255,255,0.09); }
+.item-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.item-name { font-weight: 600; font-size: 15px; }
+.item-badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.badge-new { background: rgba(59,130,246,0.2); color: #93c5fd; }
+.badge-hot { background: rgba(239,68,68,0.2); color: #fca5a5; }
+.badge-follow { background: rgba(245,158,11,0.2); color: #fcd34d; }
+.badge-active { background: rgba(34,197,94,0.2); color: #86efac; }
+.badge-dead { background: rgba(107,114,128,0.2); color: #9ca3af; }
+.badge-buyer { background: rgba(34,197,94,0.15); color: #86efac; }
+.badge-lender { background: rgba(245,158,11,0.15); color: #fcd34d; }
+.badge-wholesaler { background: rgba(239,68,68,0.15); color: #fca5a5; }
+.badge-connector { background: rgba(168,85,247,0.15); color: #c4b5fd; }
+.badge-contractor { background: rgba(59,130,246,0.15); color: #93c5fd; }
+.item-detail { font-size: 12px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
+.item-score { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+.score-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width 0.4s; }
+
+/* ── MODAL / FORM ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7);
+  display: flex; align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-sheet {
+  background: #162438; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px;
+  padding: 20px; padding-bottom: calc(20px + var(--safe-bottom));
+  max-height: 85vh; overflow-y: auto;
+  transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+}
+.modal-overlay.open .modal-sheet { transform: translateY(0); }
+.modal-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 20px; }
+.form-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; display: block; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; padding: 12px 14px; color: white; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; margin-bottom: 14px; outline: none; transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); }
+.form-select option { background: #162438; }
+.form-textarea { resize: none; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+.btn-cancel { flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: white; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 14px; border-radius: 14px; cursor: pointer; }
+.btn-save { flex: 2; background: linear-gradient(135deg, var(--gold), #c4962a); color: var(--navy); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; padding: 14px; border: none; border-radius: 14px; cursor: pointer; }
+
+/* AI analysis result */
+.ai-result {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(212,168,83,0.2);
+  border-radius: 16px; padding: 16px; margin-top: 16px; white-space: pre-wrap;
+  font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.85); display: none;
+}
+.ai-result.show { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+.loading-spinner { display: none; text-align: center; padding: 20px; color: var(--gold); font-size: 13px; }
+.loading-spinner.show { display: block; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.3); }
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; line-height: 1.5; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: calc(20px + var(--safe-bottom)); left: 50%; transform: translateX(-50%) translateY(80px);
+  background: #1e3a5f; border: 1px solid rgba(212,168,83,0.3); color: white;
+  padding: 12px 20px; border-radius: 14px; font-size: 13px; font-weight: 500;
+  z-index: 300; white-space: nowrap; transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="splash">
+  <div class="splash-icon">🏠</div>
+  <div class="splash-title">Your Real Estate<br>AI Assistant</div>
+  <div class="splash-sub">POWERED BY CLAUDE AI</div>
+  <div class="setup-card">
+    <div class="setup-label">Anthropic API Key</div>
+    <input type="password" class="setup-input" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="setup-hint">
+      Get your free key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>
+      Sign up → API Keys → Create Key. Your key starts with "sk-ant-"
+    </div>
+    <div class="setup-label">Your Name</div>
+    <input type="text" class="setup-input" id="nameInput" placeholder="e.g. Michael" autocorrect="off">
+    <button class="btn-primary" onclick="saveSetup()">Launch My Assistant →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- Header -->
+  <div class="app-header">
+    <div class="header-top">
+      <div class="header-title">🏠 <span>RE</span> Assistant</div>
+      <div style="display:flex;gap:8px;align-items:center"><button onclick="loadFromSheets()" style="background:rgba(212,168,83,0.15);border:1px solid var(--gold);color:var(--gold);font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:0.5px;">SYNC</button><div class="header-badge" id="userBadge">INVESTOR</div></div>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('chat')" id="tab-chat">
+        <span class="tab-icon">💬</span>Chat
+      </button>
+      <button class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard">
+        <span class="tab-icon">📊</span>Dashboard
+      </button>
+      <button class="nav-tab" onclick="switchTab('leads')" id="tab-leads">
+        <span class="tab-icon">📋</span>Leads
+      </button>
+      <button class="nav-tab" onclick="switchTab('contacts')" id="tab-contacts">
+        <span class="tab-icon">👥</span>Contacts
+      </button>
+      <button class="nav-tab" onclick="switchTab('deals')" id="tab-deals">
+        <span class="tab-icon">💼</span>Deals
+      </button>
+    </div>
+  </div>
+
+  <!-- Chat Tab -->
+  <div id="chat-panel" class="tab-panel active">
+    <div class="chips-row" id="chipsRow">
+      <div class="chip" onclick="useChip(this)">Who should I call today?</div>
+      <div class="chip" onclick="useChip(this)">Analyze my best deals</div>
+      <div class="chip" onclick="useChip(this)">Find cash buyers</div>
+      <div class="chip" onclick="useChip(this)">What tasks are overdue?</div>
+      <div class="chip" onclick="useChip(this)">Draft a follow-up email</div>
+      <div class="chip" onclick="useChip(this)">Best lead to call now?</div>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg-bubble system">👋 Good to see you! I know your CRM data — leads, deals, contacts, and tasks. Ask me anything or tap a chip above to get started.</div>
+    </div>
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <textarea class="chat-textarea" id="chatInput" rows="1" placeholder="Ask anything about your business..." oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Tab -->
+  <div id="dashboard-panel" class="tab-panel">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-num" id="stat-leads">0</div>
+        <div class="stat-label">Total Leads</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💼</div>
+        <div class="stat-num" id="stat-deals">0</div>
+        <div class="stat-label">Active Deals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-num" id="stat-contacts">0</div>
+        <div class="stat-label">Contacts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-num" id="stat-tasks">0</div>
+        <div class="stat-label">Open Tasks</div>
+      </div>
+    </div>
+
+    <div class="section-title">Quick Actions</div>
+    <div class="quick-actions">
+      <button class="action-btn" onclick="runAIAction('Analyze all my leads. Which 3 should I call today and why? Be specific.')">
+        <div class="action-icon">🔥</div>
+        <div class="action-label">Top Leads Today</div>
+        <div class="action-desc">AI ranks your hottest leads</div>
+      </button>
+      <button class="action-btn" onclick="runAIAction('Analyze my active deals. For each one, what is the projected profit and what is the single most important next step?')">
+        <div class="action-icon">💰</div>
+        <div class="action-label">Deal Analysis</div>
+        <div class="action-desc">Profit & next steps</div>
+      </button>
+      <button class="action-btn" onclick="runAIAction('What tasks are overdue or due today? List them by priority and tell me exactly what to say or do for each one.')">
+        <div class="action-icon">⚡</div>
+        <div class="action-label">Today\'s Tasks</div>
+        <div class="action-desc">Overdue & due today</div>
+      </button>
+      <button class="action-btn" onclick="runAIAction('Which leads have gone cold and need immediate attention? Which ones should I probably write off?')">
+        <div class="action-icon">🧊</div>
+        <div class="action-label">Cold Leads</div>
+        <div class="action-desc">Leads going silent</div>
+      </button>
+    </div>
+
+    <div class="section-title">AI Analysis Result</div>
+    <div class="loading-spinner" id="dashLoading">⏳ Analyzing your CRM data...</div>
+    <div class="ai-result" id="dashResult"></div>
+  </div>
+
+  <!-- Leads Tab -->
+  <div id="leads-panel" class="tab-panel">
+    <div class="list-header">
+      <div class="section-title" style="margin:0">Your Leads</div>
+      <button class="add-btn" onclick="openModal('lead')">+ Add Lead</button>
+    </div>
+    <div id="leadsList"></div>
+  </div>
+
+  <!-- Contacts Tab -->
+  <div id="contacts-panel" class="tab-panel">
+    <div class="list-header">
+      <div class="section-title" style="margin:0">Your Network</div>
+      <button class="add-btn" onclick="openModal('contact')">+ Add Contact</button>
+    </div>
+    <div id="contactsList"></div>
+  </div>
+
+  <!-- Deals Tab -->
+  <div id="deals-panel" class="tab-panel">
+    <div class="list-header">
+      <div class="section-title" style="margin:0">Active Deals</div>
+      <button class="add-btn" onclick="openModal('deal')">+ Add Deal</button>
+    </div>
+    <div id="dealsList"></div>
+  </div>
+</div>
+
+<!-- ADD LEAD MODAL -->
+<div class="modal-overlay" id="leadModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ Add New Lead</div>
+    <div class="form-row">
+      <div><label class="form-label">First Name</label><input class="form-input" id="l-fname" placeholder="John"></div>
+      <div><label class="form-label">Last Name</label><input class="form-input" id="l-lname" placeholder="Smith"></div>
+    </div>
+    <label class="form-label">Phone</label><input class="form-input" id="l-phone" type="tel" placeholder="555-123-4567">
+    <label class="form-label">Property Address</label><input class="form-input" id="l-address" placeholder="123 Oak St, Houston TX">
+    <label class="form-label">Lead Source</label>
+    <select class="form-select" id="l-source">
+      <option>Cold Call</option><option>Direct Mail</option><option>Website</option>
+      <option>Referral</option><option>Driving for Dollars</option><option>Social Media</option><option>Other</option>
+    </select>
+    <div class="form-row">
+      <div><label class="form-label">Motivation (1-5)</label><select class="form-select" id="l-motivation"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+      <div><label class="form-label">Timeline (1-5)</label><select class="form-select" id="l-timeline"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+    </div>
+    <label class="form-label">Notes</label><textarea class="form-textarea" id="l-notes" placeholder="What is their situation?"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('lead')">Cancel</button>
+      <button class="btn-save" onclick="saveLead()">Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CONTACT MODAL -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ Add Contact</div>
+    <div class="form-row">
+      <div><label class="form-label">First Name</label><input class="form-input" id="c-fname" placeholder="Angela"></div>
+      <div><label class="form-label">Last Name</label><input class="form-input" id="c-lname" placeholder="Rivera"></div>
+    </div>
+    <label class="form-label">Contact Type</label>
+    <select class="form-select" id="c-type">
+      <option>Cash Buyer</option><option>Private Money Lender</option><option>Private Money Partner</option>
+      <option>Wholesaler</option><option>Connector</option><option>Trade Contractor</option>
+      <option>Agent</option><option>Attorney</option><option>Title Company</option><option>Other</option>
+    </select>
+    <label class="form-label">Phone</label><input class="form-input" id="c-phone" type="tel" placeholder="555-000-0000">
+    <label class="form-label">Email</label><input class="form-input" id="c-email" type="email" placeholder="email@example.com">
+    <label class="form-label">City / Market</label><input class="form-input" id="c-city" placeholder="Houston, TX">
+    <label class="form-label">Notes / Criteria</label><textarea class="form-textarea" id="c-notes" placeholder="Buying criteria, lending terms, specialties..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('contact')">Cancel</button>
+      <button class="btn-save" onclick="saveContact()">Save Contact</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD DEAL MODAL -->
+<div class="modal-overlay" id="dealModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ Add Deal</div>
+    <label class="form-label">Property Address</label><input class="form-input" id="d-address" placeholder="456 Pine Ave, Dallas TX">
+    <label class="form-label">Seller Name</label><input class="form-input" id="d-seller" placeholder="James Williams">
+    <label class="form-label">Status</label>
+    <select class="form-select" id="d-status">
+      <option>Prospect</option><option>Negotiating</option><option>Under Contract</option><option>Closed - Won</option><option>Closed - Lost</option>
+    </select>
+    <div class="form-row">
+      <div><label class="form-label">ARV ($)</label><input class="form-input" id="d-arv" type="number" placeholder="220000"></div>
+      <div><label class="form-label">Purchase Price ($)</label><input class="form-input" id="d-price" type="number" placeholder="145000"></div>
+    </div>
+    <div class="form-row">
+      <div><label class="form-label">Repair Cost ($)</label><input class="form-input" id="d-repair" type="number" placeholder="40000"></div>
+      <div><label class="form-label">Wholesale Fee ($)</label><input class="form-input" id="d-fee" type="number" placeholder="10000"></div>
+    </div>
+    <label class="form-label">Notes</label><textarea class="form-textarea" id="d-notes" placeholder="Deal details, timeline, buyer interest..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('deal')">Cancel</button>
+      <button class="btn-save" onclick="saveDeal()">Save Deal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+let apiKey = localStorage.getItem("re_api_key") || "";
+let userName = localStorage.getItem("re_user_name") || "Investor";
+let chatHistory = [];
+var CRM_READER_URL = "https://script.google.com/macros/s/AKfycbzcJ1G5b8QtjS1khGb-Kc3g1o0Ulzrg-fehFtnEBTglaVe3tlnMzeZMa4qBCNEv3-nY/exec";
+
+let crmData = { leads: [], contacts: [], deals: [], tasks: [] };
+
+// ── INIT ───────────────────────────────────────────────────
+window.onload = () => {
+  if (apiKey) { showApp(); }
+};
+
+function loadFromSheets() {
+  showToast("Loading data from Google Sheets...");
+  var script = document.createElement("script");
+  var cb = "crmCB_" + Date.now();
+  window[cb] = function(data) {
+    if (data && data.status === "success" && data.data) {
+      crmData.leads = data.data.leads || [];
+      crmData.contacts = data.data.contacts || [];
+      crmData.deals = data.data.deals || [];
+      crmData.tasks = data.data.tasks || [];
+      refreshDashboard(); renderLeads(); renderContacts(); renderDeals();
+      showToast("CRM data loaded from Google Sheets!");
+    } else { showToast("Could not load sheet data."); }
+    document.body.removeChild(script); delete window[cb];
+  };
+  script.onerror = function() { showToast("Sheet load failed. Check script URL."); document.body.removeChild(script); delete window[cb]; };
+  script.src = CRM_READER_URL + "?callback=" + cb;
+  document.body.appendChild(script);
+}
+
+function saveSetup() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const name = document.getElementById('nameInput').value.trim() || 'Investor';
+  if (!key || (!key.startsWith('sk-ant-') && !key.startsWith('sk-'))) {
+    showToast('⚠️ Please enter a valid API key starting with sk-ant-');
+    return;
+  }
+  apiKey = key;
+  userName = name;
+  localStorage.setItem('re_api_key', key);
+  localStorage.setItem('re_user_name', name);
+  showApp();
+}
+
+function showApp() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('userBadge').textContent = userName.toUpperCase();
+  addWelcomeMessage();
+  refreshDashboard();
+  renderLeads();
+  renderContacts();
+  renderDeals();
+}
+
+function addWelcomeMessage() {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML = '';
+  addChatBubble(`${greeting}, ${userName}! 👋 I\'m your AI real estate assistant. I have access to your leads, deals, contacts, and tasks. What do you want to tackle today?`, 'system');
+}
+
+// ── TABS ───────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById(tab + '-panel').classList.add('active');
+}
+
+// ── CHAT ───────────────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function useChip(el) {
+  document.getElementById('chatInput').value = el.textContent;
+  sendChat();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg || document.getElementById('sendBtn').disabled) return;
+  input.value = '';
+  input.style.height = 'auto';
+  addChatBubble(msg, 'user');
+  document.getElementById('sendBtn').disabled = true;
+  const typing = addTyping();
+  try {
+    const response = await callClaude(buildSystemPrompt(), msg, chatHistory);
+    typing.remove();
+    addChatBubble(response, 'assistant');
+    chatHistory.push({role:'user',content:msg});
+    chatHistory.push({role:'assistant',content:response});
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+  } catch(e) {
+    typing.remove();
+    addChatBubble('❌ ' + e.message, 'assistant');
+  }
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function addChatBubble(text, type) {
+  const msgs = document.getElementById('chatMessages');
+  const el = document.createElement('div');
+  el.className = 'msg-bubble ' + type;
+  el.textContent = text;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chatMessages');
+  const el = document.createElement('div');
+  el.className = 'typing-indicator';
+  el.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+// ── AI ─────────────────────────────────────────────────────
+function buildSystemPrompt() {
+  const today = new Date().toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  return `You are ${userName}'s sharp, experienced real estate investing personal assistant. Today is ${today}. You have full access to their CRM data below. Be direct, specific, and use real names/numbers from their data. Keep responses concise but complete.\n\n=== CRM DATA ===\nLEADS (${crmData.leads.length}):\n${JSON.stringify(crmData.leads)}\n\nCONTACTS (${crmData.contacts.length}):\n${JSON.stringify(crmData.contacts)}\n\nDEALS (${crmData.deals.length}):\n${JSON.stringify(crmData.deals)}\n\nTASKS (${crmData.tasks.length}):\n${JSON.stringify(crmData.tasks)}`;
+}
+
+async function callClaude(system, userMsg, history) {
+  const messages = [...history, {role:'user',content:userMsg}];
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      system,
+      messages
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content[0].text;
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────
+function refreshDashboard() {
+  document.getElementById('stat-leads').textContent = crmData.leads.length;
+  document.getElementById('stat-contacts').textContent = crmData.contacts.length;
+  document.getElementById('stat-deals').textContent = crmData.deals.filter(d => d.status === 'Under Contract' || d.status === 'Negotiating').length;
+  document.getElementById('stat-tasks').textContent = crmData.tasks.filter(t => t.status === 'Pending' || t.status === 'In Progress').length;
+}
+
+async function runAIAction(prompt) {
+  switchTab('dashboard');
+  const spinner = document.getElementById('dashLoading');
+  const result = document.getElementById('dashResult');
+  spinner.classList.add('show');
+  result.classList.remove('show');
+  try {
+    const response = await callClaude(buildSystemPrompt(), prompt, []);
+    result.textContent = response;
+    result.classList.add('show');
+  } catch(e) {
+    result.textContent = '❌ ' + e.message;
+    result.classList.add('show');
+  }
+  spinner.classList.remove('show');
+}
+
+// ── LEADS ──────────────────────────────────────────────────
+function renderLeads() {
+  const list = document.getElementById('leadsList');
+  if (!crmData.leads.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No leads yet.<br>Tap + Add Lead to get started.</p></div>';
+    return;
+  }
+  list.innerHTML = crmData.leads.map((l, i) => {
+    const score = (parseInt(l.motivation)||0) + (parseInt(l.timeline)||0) + (parseInt(l.condition)||0);
+    const maxScore = 15;
+    const pct = Math.round((score/maxScore)*100);
+    const statusClass = {New:'badge-new',Contacted:'badge-active','Follow-Up':'badge-follow',Dead:'badge-dead','Under Contract':'badge-hot',Closed:'badge-active'}[l.status] || 'badge-new';
+    return `<div class="item-card" onclick="chatAboutLead(${i})">
+      <div class="item-card-header">
+        <div class="item-name">${l.firstName || ''} ${l.lastName || ''}</div>
+        <div class="item-badge ${statusClass}">${l.status || 'New'}</div>
+      </div>
+      <div class="item-detail">📍 ${l.address || 'No address'}</div>
+      <div class="item-detail">📞 ${l.phone || '—'} &nbsp;|&nbsp; Source: ${l.source || '—'}</div>
+      <div class="item-score">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);width:60px">Score ${score}/15</div>
+        <div class="score-bar"><div class="score-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function chatAboutLead(i) {
+  const l = crmData.leads[i];
+  const name = `${l.firstName} ${l.lastName}`;
+  switchTab('chat');
+  document.getElementById('chatInput').value = `Tell me about ${name} and what my next best action is with this lead.`;
+  sendChat();
+}
+
+function saveLead() {
+  const lead = {
+    id: 'L' + String(crmData.leads.length + 1).padStart(3,'0'),
+    dateAdded: new Date().toLocaleDateString('en-US'),
+    firstName: document.getElementById('l-fname').value.trim(),
+    lastName: document.getElementById('l-lname').value.trim(),
+    phone: document.getElementById('l-phone').value.trim(),
+    address: document.getElementById('l-address').value.trim(),
+    source: document.getElementById('l-source').value,
+    motivation: document.getElementById('l-motivation').value,
+    timeline: document.getElementById('l-timeline').value,
+    condition: 3,
+    status: 'New',
+    notes: document.getElementById('l-notes').value.trim(),
+  };
+  if (!lead.firstName || !lead.phone) { showToast('⚠️ Please enter at least a name and phone'); return; }
+  crmData.leads.push(lead);
+  localStorage.setItem('re_leads', JSON.stringify(crmData.leads));
+  closeModal('lead');
+  renderLeads();
+  refreshDashboard();
+  showToast('✅ Lead added: ' + lead.firstName + ' ' + lead.lastName);
+}
+
+// ── CONTACTS ───────────────────────────────────────────────
+function renderContacts() {
+  const list = document.getElementById('contactsList');
+  if (!crmData.contacts.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>No contacts yet.<br>Tap + Add Contact to build your network.</p></div>';
+    return;
+  }
+  list.innerHTML = crmData.contacts.map((c, i) => {
+    const typeClass = {'Cash Buyer':'badge-buyer','Private Money Lender':'badge-lender','Private Money Partner':'badge-lender','Wholesaler':'badge-wholesaler','Connector':'badge-connector','Trade Contractor':'badge-contractor'}[c.type] || 'badge-active';
+    return `<div class="item-card" onclick="chatAboutContact(${i})">
+      <div class="item-card-header">
+        <div class="item-name">${c.firstName || ''} ${c.lastName || ''}</div>
+        <div class="item-badge ${typeClass}">${c.type || 'Contact'}</div>
+      </div>
+      <div class="item-detail">📞 ${c.phone || '—'}</div>
+      <div class="item-detail">📍 ${c.city || '—'}</div>
+      ${c.notes ? `<div class="item-detail" style="margin-top:6px;color:rgba(255,255,255,0.4);font-size:11px">${c.notes.substring(0,80)}${c.notes.length>80?'...':''}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function chatAboutContact(i) {
+  const c = crmData.contacts[i];
+  const name = `${c.firstName} ${c.lastName}`;
+  switchTab('chat');
+  document.getElementById('chatInput').value = `What do I know about ${name} and how should I best work with them?`;
+  sendChat();
+}
+
+function saveContact() {
+  const contact = {
+    id: 'C' + String(crmData.contacts.length + 1).padStart(3,'0'),
+    firstName: document.getElementById('c-fname').value.trim(),
+    lastName: document.getElementById('c-lname').value.trim(),
+    type: document.getElementById('c-type').value,
+    phone: document.getElementById('c-phone').value.trim(),
+    email: document.getElementById('c-email').value.trim(),
+    city: document.getElementById('c-city').value.trim(),
+    notes: document.getElementById('c-notes').value.trim(),
+    status: 'Active',
+  };
+  if (!contact.firstName || !contact.phone) { showToast('⚠️ Please enter at least a name and phone'); return; }
+  crmData.contacts.push(contact);
+  localStorage.setItem('re_contacts', JSON.stringify(crmData.contacts));
+  closeModal('contact');
+  renderContacts();
+  refreshDashboard();
+  showToast('✅ Contact added: ' + contact.firstName + ' ' + contact.lastName);
+}
+
+// ── DEALS ──────────────────────────────────────────────────
+function renderDeals() {
+  const list = document.getElementById('dealsList');
+  if (!crmData.deals.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">💼</div><p>No deals yet.<br>Tap + Add Deal when a lead gets serious.</p></div>';
+    return;
+  }
+  list.innerHTML = crmData.deals.map((d, i) => {
+    const totalInv = (parseFloat(d.purchasePrice)||0) + (parseFloat(d.repairCost)||0) + (parseFloat(d.fee)||0);
+    const profit = (parseFloat(d.arv)||0) * 0.85 - totalInv;
+    const profitColor = profit > 0 ? '#86efac' : '#fca5a5';
+    const statusClass = {'Under Contract':'badge-hot','Negotiating':'badge-follow','Prospect':'badge-new','Closed - Won':'badge-active','Closed - Lost':'badge-dead'}[d.status] || 'badge-new';
+    return `<div class="item-card" onclick="chatAboutDeal(${i})">
+      <div class="item-card-header">
+        <div class="item-name">${d.address || 'Unknown Address'}</div>
+        <div class="item-badge ${statusClass}">${d.status || 'Prospect'}</div>
+      </div>
+      <div class="item-detail">👤 ${d.seller || '—'}</div>
+      <div class="item-detail">ARV: $${Number(d.arv||0).toLocaleString()} &nbsp;|&nbsp; Buy: $${Number(d.purchasePrice||0).toLocaleString()}</div>
+      <div style="margin-top:8px;font-size:12px;font-weight:600;color:${profitColor}">
+        Est. Profit: $${Math.round(profit).toLocaleString()}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function chatAboutDeal(i) {
+  const d = crmData.deals[i];
+  switchTab('chat');
+  document.getElementById('chatInput').value = `Analyze the deal at ${d.address} — what are the numbers, is it a good deal, and what should I do next?`;
+  sendChat();
+}
+
+function saveDeal() {
+  const deal = {
+    id: 'D' + String(crmData.deals.length + 1).padStart(3,'0'),
+    address: document.getElementById('d-address').value.trim(),
+    seller: document.getElementById('d-seller').value.trim(),
+    status: document.getElementById('d-status').value,
+    arv: document.getElementById('d-arv').value,
+    purchasePrice: document.getElementById('d-price').value,
+    repairCost: document.getElementById('d-repair').value,
+    fee: document.getElementById('d-fee').value,
+    notes: document.getElementById('d-notes').value.trim(),
+  };
+  if (!deal.address) { showToast('⚠️ Please enter a property address'); return; }
+  crmData.deals.push(deal);
+  localStorage.setItem('re_deals', JSON.stringify(crmData.deals));
+  closeModal('deal');
+  renderDeals();
+  refreshDashboard();
+  showToast('✅ Deal added: ' + deal.address);
+}
+
+// ── MODAL ──────────────────────────────────────────────────
+function openModal(type) {
+  document.getElementById(type + 'Modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(type) {
+  document.getElementById(type + 'Modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id.replace('Modal','')); });
+});
+
+// ── TOAST ──────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Allow Enter to send chat
+document.getElementById('chatInput')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+});
+</script>
+</body>
+</html>
